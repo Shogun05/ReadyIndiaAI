@@ -23,63 +23,103 @@ A production-ready full-stack AI-powered disaster alert assistant that provides 
 ## 📁 Project Structure
 
 ```
-/app/
-├── backend/                    # FastAPI Backend
-│   ├── models/                # Pydantic data models
-│   │   ├── alert.py          # Alert model with disaster types
-│   │   └── safety_step.py    # Safety steps model
+ReadyIndia AI/
+├── backend/                    # Node.js/Express Backend
+│   ├── models/                # Data models
+│   │   ├── alert.js          # Alert model with disaster types
+│   │   ├── index.js          # Model exports
+│   │   └── safety_step.js    # Safety steps model
 │   ├── routers/              # API route handlers
-│   │   ├── alerts.py         # Alert CRUD operations
-│   │   ├── ai.py             # AI simplification endpoints
-│   │   └── languages.py      # Language translations
+│   │   ├── alerts.js         # Alert CRUD operations
+│   │   ├── ai.js             # AI simplification endpoints
+│   │   ├── languages.js      # Language support
+│   │   └── index.js          # Router exports
 │   ├── services/             # Business logic
-│   │   ├── gemini_client.py  # Gemini AI integration
-│   │   ├── alert_fetcher.py  # External API fetching
-│   │   └── translation_service.py # Translation handling
-│   ├── server.py             # FastAPI application
-│   └── requirements.txt      # Python dependencies
+│   │   ├── alert_fetcher.js  # External API fetching
+│   │   ├── gemini_client.js  # Gemini AI integration
+│   │   ├── index.js          # Service exports
+│   │   ├── logger.js         # Logging utility
+│   │   └── translation_service.js # Translation handling
+│   ├── logs/                 # Application logs
+│   ├── package.json          # Node dependencies
+│   ├── server.js             # Express/Node application
+│   └── requirements.txt      # (Legacy) Python dependencies reference
 │
 ├── frontend/                  # React Frontend
 │   ├── public/
+│   │   ├── index.html        # HTML entry point
 │   │   ├── manifest.json     # PWA manifest
 │   │   └── service-worker.js # Offline caching
 │   ├── src/
 │   │   ├── components/       # Reusable components
-│   │   │   ├── Navbar.jsx
-│   │   │   ├── Footer.jsx
 │   │   │   ├── AlertCard.jsx
+│   │   │   ├── Footer.jsx
 │   │   │   ├── LanguageSwitcher.jsx
-│   │   │   └── MapComponent.jsx
+│   │   │   ├── MapComponent.jsx
+│   │   │   ├── Navbar.jsx
+│   │   │   └── ui/           # ShadCN UI components
+│   │   ├── hooks/            # Custom React hooks
+│   │   │   └── use-toast.js
+│   │   ├── lib/              # Utility functions
+│   │   │   └── utils.js
 │   │   ├── pages/            # Route pages
-│   │   │   ├── Home.jsx
-│   │   │   ├── Alerts.jsx
 │   │   │   ├── AlertDetail.jsx
+│   │   │   ├── Alerts.jsx
 │   │   │   ├── Explain.jsx
+│   │   │   ├── Home.jsx
 │   │   │   └── Settings.jsx
+│   │   ├── i18n/             # i18n translation files
+│   │   │   ├── en.json
+│   │   │   └── hi.json
 │   │   ├── i18n.js           # i18next configuration
+│   │   ├── App.css           # Global styles
 │   │   ├── App.js            # Main application
-│   │   └── App.css           # Global styles
-│   └── package.json          # Node dependencies
+│   │   ├── index.css         # Root styles
+│   │   └── index.js          # React entry point
+│   ├── lingo/                # Lingo.dev translations (auto-generated)
+│   │   ├── en.json
+│   │   ├── hi.json
+│   │   └── .versions
+│   ├── plugins/              # Custom webpack plugins
+│   │   ├── health-check/     # Health check plugin
+│   │   └── visual-edits/     # Visual edits plugin
+│   ├── craco.config.js       # Create React App config
+│   ├── lingo.config.js       # Lingo.dev configuration
+│   ├── tailwind.config.js    # TailwindCSS config
+│   ├── postcss.config.js     # PostCSS config
+│   ├── jsconfig.json         # JavaScript config
+│   ├── components.json       # Component registry
+│   ├── package.json          # Node dependencies
+│   ├── .env                  # Environment variables
+│   ├── .env.local            # Local overrides (git ignored)
+│   └── README.md             # Frontend documentation
 │
-└── README.md                  # This file
+├── tests/                    # Testing directory
+│   └── __init__.py          # Test initialization
+│
+├── lingo.config.js          # Root Lingo.dev configuration
+├── README.md                 # Project documentation
+├── package.json              # Root package (if monorepo)
+└── .gitignore                # Git ignore rules
 ```
 
 ## 🛠️ Tech Stack
 
 ### Backend
-- **FastAPI** (Python 3.11): High-performance async web framework
-- **MongoDB** (Motor): Async MongoDB driver for Python
+- **Node.js 22**: JavaScript runtime
+- **Express.js**: Fast, minimal web framework
+- **MongoDB**: NoSQL database
 - **Google Gemini AI**: Text simplification and translation
-- **APScheduler**: Scheduled task execution
-- **httpx**: Async HTTP client for API calls
-- **Pydantic**: Data validation and settings management
+- **APScheduler**: Scheduled task execution (Node version)
+- **Axios**: HTTP client for API calls
+- **Dotenv**: Environment variable management
 
 ### Frontend
 - **React 19**: UI library with hooks
 - **React Router**: Client-side routing
 - **TailwindCSS**: Utility-first CSS framework
 - **ShadCN UI**: Beautiful component library
-- **react-i18next**: Internationalization framework
+- **Lingo.dev**: AI-powered automatic multilingual translation
 - **Leaflet**: Interactive maps
 - **Axios**: HTTP client
 - **Sonner**: Toast notifications
