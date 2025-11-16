@@ -23,7 +23,7 @@ const CrowdMonitor = () => {
     setLoading(true);
     
     if (!navigator.geolocation) {
-      toast.error('Geolocation is not supported by this browser');
+      toast.error(t('geolocationNotSupported'));
       setLoading(false);
       return;
     }
@@ -42,7 +42,7 @@ const CrowdMonitor = () => {
       (error) => {
         console.error('Error getting location:', error);
         setLocationPermission('denied');
-        toast.error('Unable to get your location. Please enable location access.');
+        toast.error(t('unableToGetLocation'));
         setLoading(false);
       },
       {
@@ -71,7 +71,7 @@ const CrowdMonitor = () => {
         );
         
         if (criticalAlerts.length > 0) {
-          toast.error(`${criticalAlerts.length} critical crowd alert(s) near you!`);
+          toast.error(`${criticalAlerts.length} ${t('criticalAlertsNear')}`);
         }
       }
 
@@ -85,14 +85,14 @@ const CrowdMonitor = () => {
         );
         
         if (criticalEmergencies.length > 0) {
-          toast.error(`${criticalEmergencies.length} emergency alert(s) near you!`, {
+          toast.error(`${criticalEmergencies.length} ${t('emergencyAlertsNear')}`, {
             duration: 10000
           });
         }
       }
     } catch (error) {
       console.error('Error fetching nearby alerts:', error);
-      toast.error('Failed to check nearby alerts');
+      toast.error(t('failedCheckAlerts'));
     }
   };
 
@@ -109,7 +109,7 @@ const CrowdMonitor = () => {
       setAllLocations(data.data.locations);
     } catch (error) {
       console.error('Error fetching locations:', error);
-      toast.error('Failed to load crowd monitoring locations');
+      toast.error(t('failedLoadLocations'));
     }
   };
 
@@ -175,10 +175,10 @@ const CrowdMonitor = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Crowd Safety Monitor
+          {t('crowdSafetyMonitor')}
         </h1>
         <p className="text-gray-600">
-          Real-time crowd density monitoring to prevent stampedes and ensure public safety
+          {t('crowdMonitorDesc')}
         </p>
       </div>
 
@@ -187,10 +187,10 @@ const CrowdMonitor = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Navigation className="h-5 w-5" />
-            Your Location
+            {t('yourLocation')}
           </CardTitle>
           <CardDescription>
-            Enable location access to get personalized crowd alerts near you
+            {t('enableLocationDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -200,7 +200,7 @@ const CrowdMonitor = () => {
               disabled={loading}
               className="w-full sm:w-auto"
             >
-              {loading ? 'Getting Location...' : 'Enable Location Access'}
+              {loading ? t('gettingLocation') : t('enableLocationAccess')}
             </Button>
           )}
           
@@ -208,13 +208,13 @@ const CrowdMonitor = () => {
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-green-600">
                 <MapPin className="h-4 w-4" />
-                <span>Location access enabled</span>
+                <span>{t('locationEnabled')}</span>
               </div>
               
               {/* Emergency Alerts */}
               {emergencyAlerts.length > 0 && (
                 <div className="space-y-3">
-                  <h3 className="font-semibold text-red-800">🚨 Emergency Alerts</h3>
+                  <h3 className="font-semibold text-red-800">🚨 {t('emergencyAlerts')}</h3>
                   {emergencyAlerts.map((alert) => (
                     <Alert key={alert.id} className="border-l-4 border-l-red-500 bg-red-50">
                       <AlertTriangle className="h-4 w-4 text-red-600" />
@@ -227,7 +227,7 @@ const CrowdMonitor = () => {
                             <span className="font-medium text-red-800">{alert.location_name}</span>
                           </div>
                           <div className="text-sm text-red-700">
-                            {alert.type.replace('_', ' ').toUpperCase()} • {formatDistance(alert.distance_km || 0)} away
+                            {alert.type.replace('_', ' ').toUpperCase()} • {formatDistance(alert.distance_km || 0)} {t('away')}
                           </div>
                           <div className="text-sm text-red-600">{alert.description}</div>
                         </div>
@@ -240,7 +240,7 @@ const CrowdMonitor = () => {
               {/* Crowd Alerts */}
               {nearbyAlerts.length > 0 && (
                 <div className="space-y-3">
-                  <h3 className="font-semibold text-gray-900">Nearby Crowd Alerts</h3>
+                  <h3 className="font-semibold text-gray-900">{t('nearbyCrowdAlerts')}</h3>
                   {nearbyAlerts.map((alert) => (
                     <Alert key={alert.id} className="border-l-4 border-l-orange-500">
                       <AlertTriangle className="h-4 w-4" />
@@ -248,7 +248,7 @@ const CrowdMonitor = () => {
                         <div className="space-y-1">
                           <div className="font-medium">{alert.location_name}</div>
                           <div className="text-sm text-gray-600">
-                            {formatDistance(alert.distance_km)} away • {alert.density_percentage.toFixed(1)}% capacity
+                            {formatDistance(alert.distance_km)} {t('away')} • {alert.density_percentage.toFixed(1)}% {t('capacity').toLowerCase()}
                           </div>
                           <div className="text-sm">{alert.alert_message}</div>
                         </div>
@@ -260,7 +260,7 @@ const CrowdMonitor = () => {
               
               {nearbyAlerts.length === 0 && emergencyAlerts.length === 0 && (
                 <div className="text-green-600 text-sm">
-                  ✓ No alerts in your area
+                  ✓ {t('noAlertsInArea')}
                 </div>
               )}
             </div>
@@ -269,14 +269,14 @@ const CrowdMonitor = () => {
           {locationPermission === 'denied' && (
             <div className="space-y-3">
               <div className="text-amber-600 text-sm">
-                Location access denied. You can still view all crowd monitoring locations below.
+                {t('locationDenied')}
               </div>
               <Button 
                 variant="outline" 
                 onClick={getUserLocation}
                 className="w-full sm:w-auto"
               >
-                Try Again
+                {t('tryAgain')}
               </Button>
             </div>
           )}
@@ -294,9 +294,9 @@ const CrowdMonitor = () => {
       {/* Map Section */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Crowd Density Map</CardTitle>
+          <CardTitle>{t('crowdDensityMap')}</CardTitle>
           <CardDescription>
-            Live view of crowd density and emergency alerts
+            {t('liveViewDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -311,7 +311,7 @@ const CrowdMonitor = () => {
                   type: 'crowd',
                   severity: location.current_density,
                   location: location.location_name,
-                  ai_summary: `Crowd density: ${location.density_percentage.toFixed(1)}% (${location.estimated_count} people)`
+                  ai_summary: `${t('crowdDensity')}: ${location.density_percentage.toFixed(1)}% (${location.estimated_count} ${t('people')})`
                 })),
                 // Emergency alerts
                 ...emergencyAlerts.map(alert => ({
@@ -334,14 +334,14 @@ const CrowdMonitor = () => {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold text-gray-900">
-            Monitored Locations
+            {t('monitoredLocations')}
           </h2>
           <Button 
             variant="outline" 
             onClick={getAllLocations}
             size="sm"
           >
-            Refresh
+            {t('refresh')}
           </Button>
         </div>
         
@@ -369,11 +369,11 @@ const CrowdMonitor = () => {
               <CardContent className="space-y-3">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <div className="text-gray-500">Current Count</div>
+                    <div className="text-gray-500">{t('currentCount')}</div>
                     <div className="font-semibold">{location.estimated_count.toLocaleString()}</div>
                   </div>
                   <div>
-                    <div className="text-gray-500">Capacity</div>
+                    <div className="text-gray-500">{t('capacity')}</div>
                     <div className="font-semibold">{location.density_percentage.toFixed(1)}%</div>
                   </div>
                 </div>
@@ -401,7 +401,7 @@ const CrowdMonitor = () => {
                 <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t">
                   <div className="flex items-center gap-1">
                     <Clock className="h-3 w-3" />
-                    Updated {formatTime(location.last_updated)}
+                    {t('updated')} {formatTime(location.last_updated)}
                   </div>
                   <div className="flex items-center gap-1">
                     <MapPin className="h-3 w-3" />
@@ -417,7 +417,7 @@ const CrowdMonitor = () => {
           <Card>
             <CardContent className="text-center py-8">
               <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">No crowd monitoring locations available</p>
+              <p className="text-gray-500">{t('noLocationsAvailable')}</p>
             </CardContent>
           </Card>
         )}

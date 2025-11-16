@@ -3,15 +3,12 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const schedule = require('node-schedule');
 const dotenv = require('dotenv');
-const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 
 dotenv.config({ path: path.join(__dirname, '.env') });
 
 const logger = require('./services/logger');
 const GeminiClient = require('./services/gemini_client');
-const AlertFetcher = require('./services/alert_fetcher');
-const TranslationService = require('./services/translation_service');
 
 // Import models
 const { Alert, SEVERITY_LEVELS, DISASTER_TYPES } = require('./models/alert');
@@ -25,12 +22,6 @@ const { router: emergencyRouter, setEmergencyServices } = require('./routers/eme
 
 // Initialize services
 const geminiClient = new GeminiClient(process.env.GEMINI_API_KEY);
-const translationService = new TranslationService(geminiClient);
-const alertFetcher = new AlertFetcher({
-  usgsUrl: process.env.USGS_API_URL,
-  incoisUrl: process.env.INCOIS_API_URL,
-  gdacsUrl: process.env.GDACS_API_URL
-});
 
 // Initialize crowd monitoring
 const CrowdMonitor = require('./services/crowd_monitor');
@@ -47,21 +38,56 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: (process.env.CORS_ORIGINS || '*').split(','),
+  origin: true, // Allow all origins
   credentials: true,
-  methods: ['*'],
-  allowedHeaders: ['*']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
 }));
 app.use(express.json());
 
-// Connect to MongoDB
+console.log('=== MongoDB Configuration ===');
+console.log('MONGO_URL:', process.env.MONGO_URL);
+console.log('DB_NAME:', process.env.DB_NAME || 'alerts (default)');
+console.log('============================');
+
+// Connect to MongoDB Atlas
 mongoose.connect(process.env.MONGO_URL, {
-  dbName: process.env.DB_NAME
+  dbName: "alerts"
 })
-  .then(() => logger.info('Connected to MongoDB'))
-  .catch(err => logger.error('MongoDB connection error:', err));
+  .then(() => {
+    console.log('✓ Successfully connected to MongoDB Atlas');
+    logger.info('Connected to MongoDB Atlas');
+  })
+  .catch(err => {
+    console.error('✗ MongoDB connection error:');
+    console.error('Error name:', err.name);
+    console.error('Error message:', err.message);
+    console.error('Full error:', err);
+    logger.error('MongoDB connection error:', err);
+    process.exit(1); // Exit if database connection fails
+  });
 
 const db = mongoose.connection;
+
+// Handle connection events
+db.on('error', (err) => {
+  console.error('✗ MongoDB connection error:', err);
+  logger.error('MongoDB connection error:', err);
+});
+
+db.on('disconnected', () => {
+  console.warn('⚠ MongoDB disconnected. Attempting to reconnect...');
+  logger.warn('MongoDB disconnected. Attempting to reconnect...');
+});
+
+db.on('reconnected', () => {
+  console.log('✓ MongoDB reconnected successfully');
+  logger.info('MongoDB reconnected successfully');
+});
+
+db.on('reconnected', () => {
+  logger.info('MongoDB reconnected successfully');
+});
 
 // Routes
 app.get('/api', (req, res) => {
@@ -74,7 +100,7 @@ app.get('/api/health', (req, res) => {
 
 // Initialize routers with dependencies
 setAlertsDatabase(mongoose);
-setAiServices(geminiClient, translationService);
+setAiServices(geminiClient);
 setCrowdMonitor(crowdMonitor);
 setEmergencyServices({ emergencyService, routeOptimizer });
 
@@ -83,82 +109,6 @@ app.use('/api', aiRouter);
 app.use('/api', languagesRouter);
 app.use('/api', crowdRouter);
 app.use('/api', emergencyRouter);
-
-// Scheduled task to fetch and process alerts
-async function fetchAndProcessAlerts() {
-  try {
-    logger.info('Fetching alerts from external sources...');
-    
-    // Fetch from all sources
-    const usgsAlerts = await alertFetcher.fetchUsgsEarthquakes();
-    const gdacsAlerts = await alertFetcher.fetchGdacsAlerts();
-    const incoisAlerts = await alertFetcher.fetchIncoisAlerts();
-    
-    const allAlerts = [...usgsAlerts, ...gdacsAlerts, ...incoisAlerts];
-    
-    // Process each alert
-    for (const alertData of allAlerts) {
-      try {
-        // Check if alert already exists
-        const existing = await Alert.findOne({
-          raw_text: alertData.raw_text,
-          source: alertData.source
-        });
-        
-        if (existing) continue;
-        
-        // Simplify alert with AI
-        const simplified = await geminiClient.simplifyAlert(alertData.raw_text);
-        
-        // Translate to all languages
-        const translations = {};
-        const languages = ['hi', 'mr', 'ta', 'te', 'kn', 'bn', 'gu'];
-        
-        for (const lang of languages) {
-          const simpleTranslated = await translationService.translateAlert(simplified.simple, lang);
-          const stepsTranslated = [];
-          
-          for (const step of simplified.steps) {
-            const stepTrans = await translationService.translateAlert(step, lang);
-            stepsTranslated.push(stepTrans);
-          }
-          
-          translations[lang] = {
-            simple: simpleTranslated,
-            steps: stepsTranslated
-          };
-        }
-        
-        // Create alert document
-        const alertDoc = new Alert({
-          id: uuidv4(),
-          type: alertData.type,
-          severity: alertData.severity,
-          raw_text: alertData.raw_text,
-          ai_summary: simplified.simple,
-          ai_steps: simplified.steps,
-          languages: translations,
-          location: alertData.location || 'Unknown',
-          latitude: alertData.latitude,
-          longitude: alertData.longitude,
-          magnitude: alertData.magnitude,
-          source: alertData.source,
-          created_at: new Date()
-        });
-        
-        await alertDoc.save();
-        logger.info(`Processed and stored alert: ${alertData.type} - ${alertData.location}`);
-      } catch (error) {
-        logger.error(`Error processing alert: ${error.message}`);
-        continue;
-      }
-    }
-    
-    logger.info(`Completed alert fetch cycle. Processed ${allAlerts.length} alerts.`);
-  } catch (error) {
-    logger.error(`Error in scheduled alert fetch: ${error.message}`);
-  }
-}
 
 // Startup
 const PORT = process.env.PORT || 3000;
@@ -175,13 +125,9 @@ app.listen(PORT, async () => {
     }
   });
   
-  // Schedule alert fetching every 30 minutes
-  schedule.scheduleJob('*/30 * * * *', fetchAndProcessAlerts);
-  
   // Schedule crowd density simulation every 5 minutes
   schedule.scheduleJob('*/5 * * * *', async () => {
     try {
-      // Simulate crowd detection for Bengaluru area
       await crowdMonitor.simulateCrowdDetection(12.9716, 77.5946, 10);
       logger.info('Crowd density simulation completed');
     } catch (error) {
@@ -203,10 +149,8 @@ app.listen(PORT, async () => {
   // Initialize sample crowd monitoring locations
   await crowdMonitor.initializeSampleLocations();
   
-  // Fetch alerts immediately on startup
-  await fetchAndProcessAlerts();
-  
   logger.info(`ReadyIndia AI backend started successfully on port ${PORT}`);
+  logger.info('Gemini AI chatbot ready for questions from frontend');
 });
 
 // Graceful shutdown

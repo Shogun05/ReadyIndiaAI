@@ -18,6 +18,15 @@ const LanguageSwitcher = () => {
   const languages = [
     { code: 'en', name: 'EN', nativeName: 'English', fullName: 'English' },
     { code: 'hi', name: 'हि', nativeName: 'हिंदी', fullName: 'हिंदी (Hindi)' },
+    { code: 'ar', name: 'ع', nativeName: 'العربية', fullName: 'العربية (Arabic)' },
+    { code: 'de', name: 'DE', nativeName: 'Deutsch', fullName: 'Deutsch (German)' },
+    { code: 'es', name: 'ES', nativeName: 'Español', fullName: 'Español (Spanish)' },
+    { code: 'fr', name: 'FR', nativeName: 'Français', fullName: 'Français (French)' },
+    { code: 'it', name: 'IT', nativeName: 'Italiano', fullName: 'Italiano (Italian)' },
+    { code: 'ja', name: '日', nativeName: '日本語', fullName: '日本語 (Japanese)' },
+    { code: 'pt', name: 'PT', nativeName: 'Português', fullName: 'Português (Portuguese)' },
+    { code: 'ru', name: 'RU', nativeName: 'Русский', fullName: 'Русский (Russian)' },
+    { code: 'zh', name: '中', nativeName: '中文', fullName: '中文 (Chinese)' },
   ];
 
   // Initialize language from localStorage or browser locale

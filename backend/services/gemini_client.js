@@ -6,65 +6,93 @@ class GeminiClient {
     this.apiKey = apiKey;
     const genAI = new GoogleGenerativeAI(apiKey);
     this.model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
-    logger.info('Gemini client initialized');
+    this.chatHistory = [];
+    logger.info('Gemini chatbot client initialized');
   }
 
-  async simplifyAlert(text) {
+  async chatAboutDisaster(question, alertContext = null) {
     try {
-      const prompt = `You are a disaster communication expert. Simplify this disaster alert into easy-to-understand language for common people:
+      let systemPrompt = `You are a knowledgeable disaster management assistant. You help people understand disaster alerts, provide safety information, and answer questions about disaster preparedness and response.
 
-Alert: ${text}
+Your role:
+- Explain disaster alerts in simple, clear language
+- Provide actionable safety advice
+- Answer questions about what to do during emergencies
+- Keep responses concise and helpful (2-4 sentences)
+- Be empathetic and reassuring
 
-Provide:
-1. A simple summary (2-3 sentences)
-2. 5 specific safety steps people should take
+Guidelines:
+- Use simple language that everyone can understand
+- Focus on practical, actionable advice
+- If unsure, recommend contacting local authorities
+- Never provide medical advice - refer to healthcare professionals`;
 
-Format your response as JSON:
-{
-  "simple": "simple summary here",
-  "steps": ["step 1", "step 2", "step 3", "step 4", "step 5"]
-}`;
-
-      const result = await this.model.generateContent(prompt);
-      const response = await result.response;
-      let resultText = response.text().trim();
-
-      // Remove markdown code blocks if present
-      if (resultText.startsWith('```json')) {
-        resultText = resultText.substring(7, resultText.length - 3).trim();
-      } else if (resultText.startsWith('```')) {
-        resultText = resultText.substring(3, resultText.length - 3).trim();
+      if (alertContext) {
+        systemPrompt += `\n\nCurrent Alert Context:\n${JSON.stringify(alertContext, null, 2)}`;
       }
 
-      const parsed = JSON.parse(resultText);
-      logger.info('Successfully simplified alert with Gemini');
-      return parsed;
+      const fullPrompt = `${systemPrompt}\n\nUser Question: ${question}`;
+
+      const result = await this.model.generateContent(fullPrompt);
+      const response = await result.response;
+      const answer = response.text().trim();
+
+      logger.info('Successfully generated chatbot response');
+      return answer;
     } catch (error) {
-      logger.error(`Error simplifying alert: ${error.message}`);
-      // Fallback response
-      return {
-        simple: text.substring(0, 200) + '...',
-        steps: [
-          'Stay calm and follow official instructions',
-          'Monitor official news channels',
-          'Prepare emergency supplies',
-          'Inform family members',
-          'Avoid affected areas'
-        ]
-      };
+      logger.error(`Error generating chatbot response: ${error.message}`);
+      return "I'm having trouble responding right now. Please try again or contact local emergency services for immediate assistance.";
     }
   }
 
-  async translateText(text, targetLanguage) {
-    try {
-      const prompt = `Translate the following text to ${targetLanguage}. Only provide the translation, no explanations:\n\n${text}`;
-      const result = await this.model.generateContent(prompt);
-      const response = await result.response;
-      return response.text().trim();
-    } catch (error) {
-      logger.error(`Error translating text: ${error.message}`);
-      return text;
+  async startConversation(initialContext = null) {
+    this.chatHistory = [];
+    if (initialContext) {
+      this.chatHistory.push({
+        role: 'system',
+        content: `Context: ${JSON.stringify(initialContext)}`
+      });
     }
+    logger.info('Started new conversation');
+  }
+
+  async continueConversation(userMessage, alertContext = null) {
+    try {
+      // Add user message to history
+      this.chatHistory.push({
+        role: 'user',
+        content: userMessage,
+        timestamp: new Date()
+      });
+
+      // Generate response with context
+      const response = await this.chatAboutDisaster(userMessage, alertContext);
+
+      // Add assistant response to history
+      this.chatHistory.push({
+        role: 'assistant',
+        content: response,
+        timestamp: new Date()
+      });
+
+      logger.info('Continued conversation successfully');
+      return {
+        response,
+        history: this.chatHistory.slice(-6) // Return last 6 messages (3 exchanges)
+      };
+    } catch (error) {
+      logger.error(`Error continuing conversation: ${error.message}`);
+      throw error;
+    }
+  }
+
+  getChatHistory() {
+    return this.chatHistory;
+  }
+
+  clearChatHistory() {
+    this.chatHistory = [];
+    logger.info('Cleared chat history');
   }
 }
 

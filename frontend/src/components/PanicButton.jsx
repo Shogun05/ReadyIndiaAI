@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AlertTriangle, Phone, MapPin, Clock } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
@@ -7,6 +8,7 @@ import { Badge } from './ui/badge';
 import { toast } from 'sonner';
 
 const PanicButton = ({ userLocation, onEmergencyCreated }) => {
+  const { t } = useTranslation();
   const [isActivated, setIsActivated] = useState(false);
   const [isCreatingAlert, setIsCreatingAlert] = useState(false);
   const [emergencyType, setEmergencyType] = useState('');
@@ -14,45 +16,38 @@ const PanicButton = ({ userLocation, onEmergencyCreated }) => {
 
   const emergencyTypes = {
     'stampede_risk': {
-      label: 'Stampede Risk',
-      icon: '🏃‍♂️',
-      description: 'Dangerous crowd movement or panic'
+      label: t('stampede_risk'),
+      description: t('stampede_risk_desc')
     },
     'overcrowding': {
-      label: 'Severe Overcrowding',
-      icon: '👥',
-      description: 'Too many people in small space'
+      label: t('overcrowding'),
+      description: t('overcrowding_desc')
     },
     'blocked_exit': {
-      label: 'Blocked Exit',
-      icon: '🚪',
-      description: 'Emergency exits are blocked'
+      label: t('blocked_exit'),
+      description: t('blocked_exit_desc')
     },
     'panic_situation': {
-      label: 'Panic Situation',
-      icon: '😰',
-      description: 'People are panicking or scared'
+      label: t('panic_situation'),
+      description: t('panic_situation_desc')
     },
     'medical_emergency': {
-      label: 'Medical Emergency',
-      icon: '🏥',
-      description: 'Someone needs medical help'
+      label: t('medical_emergency'),
+      description: t('medical_emergency_desc')
     },
     'fire_hazard': {
-      label: 'Fire Hazard',
-      icon: '🔥',
-      description: 'Fire or smoke detected'
+      label: t('fire_hazard'),
+      description: t('fire_hazard_desc')
     },
     'structural_issue': {
-      label: 'Structural Problem',
-      icon: '🏗️',
-      description: 'Building or structure unsafe'
+      label: t('structural_issue'),
+      description: t('structural_issue_desc')
     }
   };
 
   const handlePanicActivation = () => {
     if (!userLocation) {
-      toast.error('Location access required for emergency alerts');
+      toast.error(t('locationRequiredEmergency'));
       return;
     }
     setIsActivated(true);
@@ -60,7 +55,7 @@ const PanicButton = ({ userLocation, onEmergencyCreated }) => {
 
   const handleEmergencySubmit = async () => {
     if (!emergencyType || !description.trim()) {
-      toast.error('Please select emergency type and provide description');
+      toast.error(t('selectTypeAndDescription'));
       return;
     }
 
@@ -89,7 +84,7 @@ const PanicButton = ({ userLocation, onEmergencyCreated }) => {
 
       const data = await response.json();
       
-      toast.success(`Emergency alert sent to ${data.data.notifications_sent} nearby users`);
+      toast.success(`${t('emergencyAlertSent')} ${data.data.notifications_sent} ${t('nearbyUsers')}`);
       
       if (onEmergencyCreated) {
         onEmergencyCreated(data.data);
@@ -101,7 +96,7 @@ const PanicButton = ({ userLocation, onEmergencyCreated }) => {
       setDescription('');
     } catch (error) {
       console.error('Error creating emergency alert:', error);
-      toast.error('Failed to send emergency alert. Please try again.');
+      toast.error(t('failedSendAlert'));
     } finally {
       setIsCreatingAlert(false);
     }
@@ -119,10 +114,10 @@ const PanicButton = ({ userLocation, onEmergencyCreated }) => {
         <CardHeader className="text-center">
           <CardTitle className="text-red-800 flex items-center justify-center gap-2">
             <AlertTriangle className="h-6 w-6" />
-            Emergency Alert
+            {t('emergencyAlert')}
           </CardTitle>
           <CardDescription className="text-red-600">
-            Report dangerous crowd situations immediately
+            {t('reportDangerousCrowd')}
           </CardDescription>
         </CardHeader>
         <CardContent className="text-center space-y-4">
@@ -131,19 +126,19 @@ const PanicButton = ({ userLocation, onEmergencyCreated }) => {
             className="w-full bg-red-600 hover:bg-red-700 text-white py-6 text-lg font-bold"
             disabled={!userLocation}
           >
-            🚨 EMERGENCY ALERT
+            🚨 {t('emergencyAlertButton')}
           </Button>
           
           {!userLocation && (
             <p className="text-sm text-red-600">
-              Enable location access to use emergency alerts
+              {t('enableLocationForEmergency')}
             </p>
           )}
 
           <div className="text-xs text-gray-600 space-y-1">
-            <p>• Alerts nearby users instantly</p>
-            <p>• Notifies emergency services</p>
-            <p>• Only use for real emergencies</p>
+            <p>• {t('alertsNearbyUsers')}</p>
+            <p>• {t('notifiesEmergencyServices')}</p>
+            <p>• {t('onlyRealEmergencies')}</p>
           </div>
         </CardContent>
       </Card>
@@ -155,17 +150,17 @@ const PanicButton = ({ userLocation, onEmergencyCreated }) => {
       <CardHeader>
         <CardTitle className="text-red-800 flex items-center gap-2">
           <AlertTriangle className="h-5 w-5" />
-          Report Emergency
+          {t('reportEmergency')}
         </CardTitle>
         <CardDescription className="text-red-600">
-          Select the type of emergency and provide details
+          {t('selectEmergencyType')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Emergency Type Selection */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Emergency Type *
+            {t('emergencyType')} *
           </label>
           <div className="grid grid-cols-1 gap-2">
             {Object.entries(emergencyTypes).map(([key, type]) => (
@@ -193,18 +188,18 @@ const PanicButton = ({ userLocation, onEmergencyCreated }) => {
         {/* Description */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Description *
+            {t('description')} *
           </label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Describe what's happening... (e.g., 'Too many people pushing near main entrance, people falling')"
+            placeholder={t('descriptionPlaceholder')}
             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
             rows={3}
             maxLength={500}
           />
           <div className="text-xs text-gray-500 mt-1">
-            {description.length}/500 characters
+            {description.length}/500 {t('charactersCount')}
           </div>
         </div>
 
@@ -214,7 +209,7 @@ const PanicButton = ({ userLocation, onEmergencyCreated }) => {
             <MapPin className="h-4 w-4" />
             <AlertDescription>
               <div className="text-sm">
-                <strong>Your location:</strong> {userLocation.latitude.toFixed(4)}, {userLocation.longitude.toFixed(4)}
+                <strong>{t('yourLocationLabel')}:</strong> {userLocation.latitude.toFixed(4)}, {userLocation.longitude.toFixed(4)}
               </div>
             </AlertDescription>
           </Alert>
@@ -227,7 +222,7 @@ const PanicButton = ({ userLocation, onEmergencyCreated }) => {
             disabled={isCreatingAlert || !emergencyType || !description.trim()}
             className="flex-1 bg-red-600 hover:bg-red-700 text-white"
           >
-            {isCreatingAlert ? 'Sending Alert...' : 'Send Emergency Alert'}
+            {isCreatingAlert ? t('sendingAlert') : t('sendEmergencyAlert')}
           </Button>
           <Button
             onClick={handleCancel}
@@ -235,13 +230,12 @@ const PanicButton = ({ userLocation, onEmergencyCreated }) => {
             disabled={isCreatingAlert}
             className="px-6"
           >
-            Cancel
+            {t('cancel')}
           </Button>
         </div>
 
         <div className="text-xs text-gray-600 bg-yellow-50 p-3 rounded-lg">
-          <strong>⚠️ Important:</strong> This will immediately alert nearby users and emergency services. 
-          Only use for real emergencies. False alarms can be dangerous and may result in penalties.
+          <strong>⚠️ {t('importantWarning')}:</strong> {t('falseAlarmWarning')}
         </div>
       </CardContent>
     </Card>

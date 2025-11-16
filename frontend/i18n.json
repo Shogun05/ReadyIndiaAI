@@ -12,21 +12,15 @@
       "ja",
       "zh",
       "ru",
-      "ar",
-      "ko"
+      "ar"
     ]
   },
   "buckets": {
     "json": {
       "include": [
-        "src/locales/messages.[locale].json"
+        "src/locales/[locale].json"
       ]
     }
-  },
-  "provider": {
-    "id": "anthropic",
-    "model": "claude-3-5-sonnet-20241022",
-    "prompt": "Translate the provided text from {source} to {target}. Provide only the translation without any additional explanation."
   },
   "$schema": "https://lingo.dev/schema/i18n.json"
 }

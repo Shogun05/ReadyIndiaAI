@@ -14,7 +14,7 @@ const Navbar = () => {
   const navItems = [
     { path: '/', icon: Home, label: t('home') },
     { path: '/alerts', icon: List, label: t('alerts') },
-    { path: '/crowd-monitor', icon: Users, label: 'Crowd Safety' },
+    { path: '/crowd-monitor', icon: Users, label: t('crowdSafety') },
     { path: '/explain', icon: FileText, label: t('explain') },
     { path: '/settings', icon: Settings, label: t('settings') }
   ];
