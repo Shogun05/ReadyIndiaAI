@@ -8,6 +8,7 @@ import Alerts from './pages/Alerts';
 import AlertDetail from './pages/AlertDetail';
 import Explain from './pages/Explain';
 import Settings from './pages/Settings';
+import CrowdMonitor from './pages/CrowdMonitor';
 import './App.css';
 
 function App() {
@@ -34,6 +35,7 @@ function App() {
             <Route path="/alerts" element={<Alerts />} />
             <Route path="/alerts/:id" element={<AlertDetail />} />
             <Route path="/explain" element={<Explain />} />
+            <Route path="/crowd-monitor" element={<CrowdMonitor />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </main>

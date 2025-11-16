@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, Shield, Globe, Zap } from 'lucide-react';
+import { AlertTriangle, Shield, Globe, Zap, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Home = () => {
@@ -12,6 +12,11 @@ const Home = () => {
       icon: AlertTriangle,
       title: t('realTimeAlerts'),
       description: t('instantNotifications')
+    },
+    {
+      icon: Users,
+      title: 'Crowd Safety',
+      description: 'Real-time crowd density monitoring to prevent stampedes and ensure public safety'
     },
     {
       icon: Zap,
@@ -59,7 +64,7 @@ const Home = () => {
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-12" style={{ fontFamily: 'Playfair Display, serif' }}>
             {t('whyReadyIndia')}
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
             {features.map((feature, index) => (
               <div 
                 key={index} 
@@ -90,6 +95,17 @@ const Home = () => {
                 className="bg-white text-orange-600 hover:bg-gray-100 px-8 py-6 rounded-full shadow-lg"
               >
                 {t('viewAlerts')}
+              </Button>
+            </Link>
+            <Link to="/crowd-monitor">
+              <Button 
+                size="lg" 
+                variant="outline"
+                data-testid="crowd-monitor-cta"
+                className="border-2 border-white text-white hover:bg-white/10 px-8 py-6 rounded-full"
+              >
+                <Users className="w-5 h-5 mr-2" />
+                Crowd Safety
               </Button>
             </Link>
             <Link to="/explain">

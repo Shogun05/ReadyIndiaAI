@@ -20,6 +20,7 @@ const { Alert, SEVERITY_LEVELS, DISASTER_TYPES } = require('./models/alert');
 const { router: alertsRouter, setDatabase: setAlertsDatabase } = require('./routers/alerts');
 const { router: aiRouter, setServices: setAiServices } = require('./routers/ai');
 const { router: languagesRouter } = require('./routers/languages');
+const { router: crowdRouter, setCrowdMonitor } = require('./routers/crowd');
 
 // Initialize services
 const geminiClient = new GeminiClient(process.env.GEMINI_API_KEY);
@@ -29,6 +30,10 @@ const alertFetcher = new AlertFetcher({
   incoisUrl: process.env.INCOIS_API_URL,
   gdacsUrl: process.env.GDACS_API_URL
 });
+
+// Initialize crowd monitoring
+const CrowdMonitor = require('./services/crowd_monitor');
+const crowdMonitor = new CrowdMonitor();
 
 // Create Express app
 const app = express();
@@ -63,10 +68,12 @@ app.get('/api/health', (req, res) => {
 // Initialize routers with dependencies
 setAlertsDatabase(mongoose);
 setAiServices(geminiClient, translationService);
+setCrowdMonitor(crowdMonitor);
 
 app.use('/api', alertsRouter);
 app.use('/api', aiRouter);
 app.use('/api', languagesRouter);
+app.use('/api', crowdRouter);
 
 // Scheduled task to fetch and process alerts
 async function fetchAndProcessAlerts() {
@@ -161,6 +168,20 @@ app.listen(PORT, async () => {
   
   // Schedule alert fetching every 30 minutes
   schedule.scheduleJob('*/30 * * * *', fetchAndProcessAlerts);
+  
+  // Schedule crowd density simulation every 5 minutes
+  schedule.scheduleJob('*/5 * * * *', async () => {
+    try {
+      // Simulate crowd detection for Bengaluru area
+      await crowdMonitor.simulateCrowdDetection(12.9716, 77.5946, 10);
+      logger.info('Crowd density simulation completed');
+    } catch (error) {
+      logger.error('Error in scheduled crowd simulation:', error);
+    }
+  });
+  
+  // Initialize sample crowd monitoring locations
+  await crowdMonitor.initializeSampleLocations();
   
   // Fetch alerts immediately on startup
   await fetchAndProcessAlerts();

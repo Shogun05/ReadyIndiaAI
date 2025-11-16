@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router-dom';
-import { AlertTriangle, Home, List, FileText, Settings } from 'lucide-react';
+import { AlertTriangle, Home, List, FileText, Settings, Users } from 'lucide-react';
 import LanguageSwitcher from './LanguageSwitcher';
 
 const Navbar = () => {
@@ -11,6 +11,7 @@ const Navbar = () => {
   const navItems = [
     { path: '/', icon: Home, label: t('home') },
     { path: '/alerts', icon: List, label: t('alerts') },
+    { path: '/crowd-monitor', icon: Users, label: 'Crowd Safety' },
     { path: '/explain', icon: FileText, label: t('explain') },
     { path: '/settings', icon: Settings, label: t('settings') }
   ];
