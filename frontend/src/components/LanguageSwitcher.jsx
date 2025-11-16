@@ -16,19 +16,8 @@ const LanguageSwitcher = () => {
   const [isChanging, setIsChanging] = useState(false);
 
   const languages = [
-    { code: 'en', name: 'English', nativeName: 'English' },
-    { code: 'hi', name: 'हिंदी (Hindi)', nativeName: 'हिंदी' },
-    // Additional languages can be added via Lingo.dev
-    // { code: 'de', name: 'Deutsch (German)', nativeName: 'Deutsch' },
-    // { code: 'it', name: 'Italiano (Italian)', nativeName: 'Italiano' },
-    // { code: 'fr', name: 'Français (French)', nativeName: 'Français' },
-    // { code: 'es', name: 'Español (Spanish)', nativeName: 'Español' },
-    // { code: 'pt', name: 'Português (Portuguese)', nativeName: 'Português' },
-    // { code: 'ja', name: '日本語 (Japanese)', nativeName: '日本語' },
-    // { code: 'zh', name: '中文 (Chinese)', nativeName: '中文' },
-    // { code: 'ru', name: 'Русский (Russian)', nativeName: 'Русский' },
-    // { code: 'ar', name: 'العربية (Arabic)', nativeName: 'العربية' },
-    // { code: 'ko', name: '한국어 (Korean)', nativeName: '한국어' }
+    { code: 'en', name: 'EN', nativeName: 'English', fullName: 'English' },
+    { code: 'hi', name: 'हि', nativeName: 'हिंदी', fullName: 'हिंदी (Hindi)' },
   ];
 
   // Initialize language from localStorage or browser locale
@@ -76,15 +65,15 @@ const LanguageSwitcher = () => {
   };
 
   return (
-    <div data-testid="language-switcher" className="flex items-center space-x-2">
-      <Globe className="w-5 h-5 text-gray-600" />
+    <div data-testid="language-switcher" className="flex items-center space-x-1">
+      <Globe className="w-4 h-4 text-white md:text-gray-600" />
       <Select 
         value={currentLanguage} 
         onValueChange={changeLanguage}
         disabled={isChanging}
       >
-        <SelectTrigger data-testid="language-select" className="w-48">
-          <SelectValue placeholder="Select Language" />
+        <SelectTrigger data-testid="language-select" className="w-16 md:w-20 text-white md:text-gray-900 border-white/30 md:border-gray-300 text-sm">
+          <SelectValue placeholder="EN" />
         </SelectTrigger>
         <SelectContent>
           {languages.map(lang => (
@@ -93,7 +82,7 @@ const LanguageSwitcher = () => {
               value={lang.code} 
               data-testid={`lang-option-${lang.code}`}
             >
-              {lang.name}
+              {lang.fullName}
             </SelectItem>
           ))}
         </SelectContent>

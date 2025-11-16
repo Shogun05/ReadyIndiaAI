@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { MapPin, Users, AlertTriangle, Clock, Navigation } from 'lucide-react';
+import { MapPin, Users, AlertTriangle, Clock, Navigation, Route } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import MapComponent from '../components/MapComponent';
+import PanicButton from '../components/PanicButton';
 
 const CrowdMonitor = () => {
   const { t } = useTranslation();
   const [userLocation, setUserLocation] = useState(null);
   const [nearbyAlerts, setNearbyAlerts] = useState([]);
   const [allLocations, setAllLocations] = useState([]);
+  const [emergencyAlerts, setEmergencyAlerts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [locationPermission, setLocationPermission] = useState('prompt');
 
@@ -54,28 +56,43 @@ const CrowdMonitor = () => {
   // Check for nearby crowd alerts
   const checkNearbyAlerts = async (lat, lon, radius = 5) => {
     try {
-      const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/crowd/nearby?lat=${lat}&lon=${lon}&radius=${radius}`
-      );
+      const [crowdResponse, emergencyResponse] = await Promise.all([
+        fetch(`${process.env.REACT_APP_BACKEND_URL}/api/crowd/nearby?lat=${lat}&lon=${lon}&radius=${radius}`),
+        fetch(`${process.env.REACT_APP_BACKEND_URL}/api/emergency/nearby?lat=${lat}&lon=${lon}&radius=${radius}`)
+      ]);
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch nearby alerts');
+      if (crowdResponse.ok) {
+        const crowdData = await crowdResponse.json();
+        setNearbyAlerts(crowdData.data.nearby_alerts);
+        
+        // Show toast for critical alerts
+        const criticalAlerts = crowdData.data.nearby_alerts.filter(alert => 
+          alert.current_density === 'critical'
+        );
+        
+        if (criticalAlerts.length > 0) {
+          toast.error(`${criticalAlerts.length} critical crowd alert(s) near you!`);
+        }
       }
-      
-      const data = await response.json();
-      setNearbyAlerts(data.data.nearby_alerts);
-      
-      // Show toast for critical alerts
-      const criticalAlerts = data.data.nearby_alerts.filter(alert => 
-        alert.current_density === 'critical'
-      );
-      
-      if (criticalAlerts.length > 0) {
-        toast.error(`${criticalAlerts.length} critical crowd alert(s) near you!`);
+
+      if (emergencyResponse.ok) {
+        const emergencyData = await emergencyResponse.json();
+        setEmergencyAlerts(emergencyData.data.alerts);
+        
+        // Show toast for emergency alerts
+        const criticalEmergencies = emergencyData.data.alerts.filter(alert => 
+          alert.severity === 'critical'
+        );
+        
+        if (criticalEmergencies.length > 0) {
+          toast.error(`${criticalEmergencies.length} emergency alert(s) near you!`, {
+            duration: 10000
+          });
+        }
       }
     } catch (error) {
       console.error('Error fetching nearby alerts:', error);
-      toast.error('Failed to check nearby crowd alerts');
+      toast.error('Failed to check nearby alerts');
     }
   };
 
@@ -132,6 +149,14 @@ const CrowdMonitor = () => {
     });
   };
 
+  // Handle emergency alert creation
+  const handleEmergencyCreated = (emergencyData) => {
+    // Refresh nearby alerts to include the new emergency
+    if (userLocation) {
+      checkNearbyAlerts(userLocation.latitude, userLocation.longitude);
+    }
+  };
+
   useEffect(() => {
     getAllLocations();
     
@@ -186,6 +211,33 @@ const CrowdMonitor = () => {
                 <span>Location access enabled</span>
               </div>
               
+              {/* Emergency Alerts */}
+              {emergencyAlerts.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-red-800">🚨 Emergency Alerts</h3>
+                  {emergencyAlerts.map((alert) => (
+                    <Alert key={alert.id} className="border-l-4 border-l-red-500 bg-red-50">
+                      <AlertTriangle className="h-4 w-4 text-red-600" />
+                      <AlertDescription>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Badge className="bg-red-600 text-white text-xs">
+                              {alert.severity.toUpperCase()}
+                            </Badge>
+                            <span className="font-medium text-red-800">{alert.location_name}</span>
+                          </div>
+                          <div className="text-sm text-red-700">
+                            {alert.type.replace('_', ' ').toUpperCase()} • {formatDistance(alert.distance_km || 0)} away
+                          </div>
+                          <div className="text-sm text-red-600">{alert.description}</div>
+                        </div>
+                      </AlertDescription>
+                    </Alert>
+                  ))}
+                </div>
+              )}
+
+              {/* Crowd Alerts */}
               {nearbyAlerts.length > 0 && (
                 <div className="space-y-3">
                   <h3 className="font-semibold text-gray-900">Nearby Crowd Alerts</h3>
@@ -206,9 +258,9 @@ const CrowdMonitor = () => {
                 </div>
               )}
               
-              {nearbyAlerts.length === 0 && (
+              {nearbyAlerts.length === 0 && emergencyAlerts.length === 0 && (
                 <div className="text-green-600 text-sm">
-                  ✓ No crowd alerts in your area
+                  ✓ No alerts in your area
                 </div>
               )}
             </div>
@@ -231,26 +283,47 @@ const CrowdMonitor = () => {
         </CardContent>
       </Card>
 
+      {/* Emergency Alert Section */}
+      <div className="mb-6">
+        <PanicButton 
+          userLocation={userLocation} 
+          onEmergencyCreated={handleEmergencyCreated}
+        />
+      </div>
+
       {/* Map Section */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle>Crowd Density Map</CardTitle>
           <CardDescription>
-            Live view of crowd density across monitored locations
+            Live view of crowd density and emergency alerts
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-96 rounded-lg overflow-hidden">
             <MapComponent 
-              alerts={allLocations.map(location => ({
-                id: location.id,
-                latitude: location.latitude,
-                longitude: location.longitude,
-                type: 'crowd',
-                severity: location.current_density,
-                location: location.location_name,
-                ai_summary: `Crowd density: ${location.density_percentage.toFixed(1)}% (${location.estimated_count} people)`
-              }))}
+              alerts={[
+                // Crowd density locations
+                ...allLocations.map(location => ({
+                  id: location.id,
+                  latitude: location.latitude,
+                  longitude: location.longitude,
+                  type: 'crowd',
+                  severity: location.current_density,
+                  location: location.location_name,
+                  ai_summary: `Crowd density: ${location.density_percentage.toFixed(1)}% (${location.estimated_count} people)`
+                })),
+                // Emergency alerts
+                ...emergencyAlerts.map(alert => ({
+                  id: `emergency_${alert.id}`,
+                  latitude: alert.latitude,
+                  longitude: alert.longitude,
+                  type: 'emergency',
+                  severity: alert.severity,
+                  location: alert.location_name,
+                  ai_summary: `${alert.type.replace('_', ' ').toUpperCase()}: ${alert.description}`
+                }))
+              ]}
               userLocation={userLocation}
             />
           </div>

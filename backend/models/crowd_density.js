@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 
-// Crowd density levels
 const DENSITY_LEVELS = {
   LOW: 'low',
   MEDIUM: 'medium',
@@ -8,7 +7,6 @@ const DENSITY_LEVELS = {
   CRITICAL: 'critical'
 };
 
-// Location types where crowds gather
 const LOCATION_TYPES = {
   EVENT: 'event',
   TRANSPORT: 'transport',
@@ -83,7 +81,6 @@ const crowdDensitySchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
-  // Store recent density history for trend analysis
   density_history: [{
     timestamp: {
       type: Date,
@@ -101,13 +98,10 @@ const crowdDensitySchema = new mongoose.Schema({
   }]
 });
 
-// Index for geospatial queries
 crowdDensitySchema.index({ latitude: 1, longitude: 1 });
 crowdDensitySchema.index({ location_type: 1 });
 crowdDensitySchema.index({ current_density: 1 });
 crowdDensitySchema.index({ alert_active: 1 });
-
-// Method to calculate density level based on percentage
 crowdDensitySchema.methods.calculateDensityLevel = function() {
   const percentage = this.density_percentage;
   
@@ -116,15 +110,12 @@ crowdDensitySchema.methods.calculateDensityLevel = function() {
   if (percentage >= 40) return DENSITY_LEVELS.MEDIUM;
   return DENSITY_LEVELS.LOW;
 };
-
-// Method to update density and check for alerts
 crowdDensitySchema.methods.updateDensity = function(newCount) {
   this.estimated_count = newCount;
   this.density_percentage = Math.min((newCount / this.max_capacity) * 100, 100);
   this.current_density = this.calculateDensityLevel();
   this.last_updated = new Date();
   
-  // Add to history (keep last 24 entries)
   this.density_history.push({
     timestamp: new Date(),
     count: newCount,
@@ -135,7 +126,6 @@ crowdDensitySchema.methods.updateDensity = function(newCount) {
     this.density_history = this.density_history.slice(-24);
   }
   
-  // Check if alert should be activated
   if (this.current_density === DENSITY_LEVELS.CRITICAL || this.current_density === DENSITY_LEVELS.HIGH) {
     this.alert_active = true;
     this.alert_message = this.generateAlertMessage();
@@ -145,7 +135,6 @@ crowdDensitySchema.methods.updateDensity = function(newCount) {
   }
 };
 
-// Method to generate appropriate alert message
 crowdDensitySchema.methods.generateAlertMessage = function() {
   const messages = {
     [DENSITY_LEVELS.CRITICAL]: `CRITICAL: Extremely high crowd density at ${this.location_name}. Avoid this area immediately for your safety. Consider alternative routes.`,
@@ -155,9 +144,8 @@ crowdDensitySchema.methods.generateAlertMessage = function() {
   return messages[this.current_density] || '';
 };
 
-// Static method to find nearby crowd hotspots
 crowdDensitySchema.statics.findNearby = function(latitude, longitude, radiusKm = 5) {
-  const radiusInDegrees = radiusKm / 111; // Rough conversion
+  const radiusInDegrees = radiusKm / 111;
   
   return this.find({
     latitude: {
@@ -171,7 +159,6 @@ crowdDensitySchema.statics.findNearby = function(latitude, longitude, radiusKm =
   }).sort({ density_percentage: -1 });
 };
 
-// Static method to find active alerts
 crowdDensitySchema.statics.findActiveAlerts = function() {
   return this.find({ alert_active: true }).sort({ density_percentage: -1 });
 };

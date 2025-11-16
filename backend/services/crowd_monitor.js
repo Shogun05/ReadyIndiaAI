@@ -6,33 +6,19 @@ class CrowdMonitor {
     this.activeLocations = new Map(); // In-memory tracking for real-time updates
   }
 
-  // Simulate crowd density detection (in real app, this would integrate with:
-  // - Mobile app location data
-  // - Traffic APIs
-  // - Social media check-ins
-  // - Event management systems
-  // - Public transport APIs
   async simulateCrowdDetection(latitude, longitude, radiusKm = 1) {
     try {
-      // Find existing locations in the area
       const nearbyLocations = await CrowdDensity.findNearby(latitude, longitude, radiusKm);
-      
-      // Simulate crowd count updates based on various factors
       const updates = [];
       
       for (const location of nearbyLocations) {
-        // Simulate realistic crowd fluctuations
         const currentHour = new Date().getHours();
         const isWeekend = [0, 6].includes(new Date().getDay());
         
         let multiplier = this.getCrowdMultiplier(location.location_type, currentHour, isWeekend);
-        
-        // Add some randomness to simulate real-world variations
-        multiplier *= (0.8 + Math.random() * 0.4); // ±20% variation
+        multiplier *= (0.8 + Math.random() * 0.4);
         
         const newCount = Math.floor(location.max_capacity * multiplier);
-        
-        // Update the location
         location.updateDensity(newCount);
         await location.save();
         
@@ -55,7 +41,6 @@ class CrowdMonitor {
     }
   }
 
-  // Get crowd multiplier based on location type and time
   getCrowdMultiplier(locationType, hour, isWeekend) {
     const patterns = {
       [LOCATION_TYPES.TRANSPORT]: {
@@ -88,20 +73,15 @@ class CrowdMonitor {
     return isWeekend ? pattern.weekend : pattern.weekday;
   }
 
-  // Report user location and get nearby crowd alerts
   async checkUserLocation(latitude, longitude, radiusKm = 5) {
     try {
-      // Find nearby locations with crowd data
       const nearbyLocations = await CrowdDensity.findNearby(latitude, longitude, radiusKm);
-      
-      // Filter for locations with alerts or high density
       const alerts = nearbyLocations.filter(location => 
         location.alert_active || 
         location.current_density === DENSITY_LEVELS.HIGH ||
         location.current_density === DENSITY_LEVELS.CRITICAL
       );
 
-      // Calculate distance for each alert (rough calculation)
       const alertsWithDistance = alerts.map(location => {
         const distance = this.calculateDistance(latitude, longitude, location.latitude, location.longitude);
         return {
@@ -118,7 +98,6 @@ class CrowdMonitor {
         };
       });
 
-      // Sort by distance
       alertsWithDistance.sort((a, b) => a.distance_km - b.distance_km);
 
       return {
@@ -133,9 +112,8 @@ class CrowdMonitor {
     }
   }
 
-  // Calculate distance between two points (Haversine formula)
   calculateDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371; // Earth's radius in kilometers
+    const R = 6371;
     const dLat = this.toRadians(lat2 - lat1);
     const dLon = this.toRadians(lon2 - lon1);
     const a = 
@@ -150,7 +128,6 @@ class CrowdMonitor {
     return degrees * (Math.PI/180);
   }
 
-  // Add a new location to monitor
   async addLocation(locationData) {
     try {
       const { v4: uuidv4 } = require('uuid');
@@ -165,7 +142,6 @@ class CrowdMonitor {
         estimated_count: locationData.initial_count || 0
       });
 
-      // Calculate initial density
       crowdLocation.updateDensity(crowdLocation.estimated_count);
       
       await crowdLocation.save();
@@ -178,7 +154,6 @@ class CrowdMonitor {
     }
   }
 
-  // Get all active alerts
   async getActiveAlerts() {
     try {
       const alerts = await CrowdDensity.findActiveAlerts();
@@ -200,7 +175,6 @@ class CrowdMonitor {
     }
   }
 
-  // Initialize with some sample locations (for demo purposes)
   async initializeSampleLocations() {
     try {
       const sampleLocations = [
@@ -247,7 +221,6 @@ class CrowdMonitor {
       ];
 
       for (const locationData of sampleLocations) {
-        // Check if location already exists
         const existing = await CrowdDensity.findOne({
           location_name: locationData.location_name
         });

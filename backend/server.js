@@ -21,6 +21,7 @@ const { router: alertsRouter, setDatabase: setAlertsDatabase } = require('./rout
 const { router: aiRouter, setServices: setAiServices } = require('./routers/ai');
 const { router: languagesRouter } = require('./routers/languages');
 const { router: crowdRouter, setCrowdMonitor } = require('./routers/crowd');
+const { router: emergencyRouter, setEmergencyServices } = require('./routers/emergency');
 
 // Initialize services
 const geminiClient = new GeminiClient(process.env.GEMINI_API_KEY);
@@ -34,6 +35,12 @@ const alertFetcher = new AlertFetcher({
 // Initialize crowd monitoring
 const CrowdMonitor = require('./services/crowd_monitor');
 const crowdMonitor = new CrowdMonitor();
+
+// Initialize emergency services
+const EmergencyService = require('./services/emergency_service');
+const RouteOptimizer = require('./services/route_optimizer');
+const emergencyService = new EmergencyService();
+const routeOptimizer = new RouteOptimizer();
 
 // Create Express app
 const app = express();
@@ -69,11 +76,13 @@ app.get('/api/health', (req, res) => {
 setAlertsDatabase(mongoose);
 setAiServices(geminiClient, translationService);
 setCrowdMonitor(crowdMonitor);
+setEmergencyServices({ emergencyService, routeOptimizer });
 
 app.use('/api', alertsRouter);
 app.use('/api', aiRouter);
 app.use('/api', languagesRouter);
 app.use('/api', crowdRouter);
+app.use('/api', emergencyRouter);
 
 // Scheduled task to fetch and process alerts
 async function fetchAndProcessAlerts() {
@@ -177,6 +186,17 @@ app.listen(PORT, async () => {
       logger.info('Crowd density simulation completed');
     } catch (error) {
       logger.error('Error in scheduled crowd simulation:', error);
+    }
+  });
+
+  // Schedule emergency detection every 2 minutes
+  schedule.scheduleJob('*/2 * * * *', async () => {
+    try {
+      await emergencyService.detectEmergencySituations();
+      await emergencyService.cleanupExpiredAlerts();
+      logger.info('Emergency detection and cleanup completed');
+    } catch (error) {
+      logger.error('Error in scheduled emergency detection:', error);
     }
   });
   

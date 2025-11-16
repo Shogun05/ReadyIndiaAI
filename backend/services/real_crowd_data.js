@@ -1,5 +1,3 @@
-// Example of how real crowd data integration would work
-
 class RealCrowdDataService {
   constructor() {
     this.googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY;
@@ -9,7 +7,6 @@ class RealCrowdDataService {
     };
   }
 
-  // Get real crowd data from multiple sources
   async getRealCrowdData(latitude, longitude, locationName) {
     const crowdSources = await Promise.allSettled([
       this.getTrafficBasedCrowdEstimate(latitude, longitude),
@@ -22,20 +19,17 @@ class RealCrowdDataService {
     return this.aggregateCrowdData(crowdSources);
   }
 
-  // Traffic-based crowd estimation
   async getTrafficBasedCrowdEstimate(lat, lon) {
     try {
-      // Google Maps Traffic Layer API
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/directions/json?` +
         `origin=${lat},${lon}&destination=${lat},${lon}&` +
         `departure_time=now&traffic_model=best_guess&` +
         `key=${this.googleMapsApiKey}`
       );
-      
+
       const data = await response.json();
-      
-      // Convert traffic conditions to crowd estimate
+
       const trafficLevel = this.parseTrafficLevel(data);
       return this.trafficToCrowdMapping(trafficLevel);
     } catch (error) {
@@ -44,27 +38,22 @@ class RealCrowdDataService {
     }
   }
 
-  // Social media activity analysis
   async getSocialMediaActivity(lat, lon, locationName) {
     try {
-      const radius = 500; // 500 meters
-      
-      // Instagram Location API (hypothetical)
+      const radius = 500;
+
       const instagramPosts = await this.getInstagramLocationPosts(
         locationName, lat, lon, radius
       );
-      
-      // Twitter Geo API
+
       const tweets = await this.getGeoTaggedTweets(lat, lon, radius);
-      
-      // Calculate activity score
       const activityScore = this.calculateSocialActivity(
         instagramPosts, tweets
       );
-      
+
       return {
         source: 'social_media',
-        estimate: activityScore * 50, // Convert to people estimate
+        estimate: activityScore * 50,
         confidence: 0.6,
         details: {
           instagram_posts: instagramPosts.length,
@@ -77,24 +66,22 @@ class RealCrowdDataService {
     }
   }
 
-  // Event-based crowd prediction
   async getEventData(lat, lon) {
     try {
-      // Check for scheduled events nearby
       const events = await Promise.all([
         this.getBookMyShowEvents(lat, lon),
         this.getPaytmEvents(lat, lon),
         this.getFacebookEvents(lat, lon)
       ]);
-      
-      const activeEvents = events.flat().filter(event => 
+
+      const activeEvents = events.flat().filter(event =>
         this.isEventActive(event)
       );
-      
+
       const totalExpectedAttendees = activeEvents.reduce(
         (sum, event) => sum + (event.expected_attendees || 0), 0
       );
-      
+
       return {
         source: 'events',
         estimate: totalExpectedAttendees,
@@ -107,15 +94,11 @@ class RealCrowdDataService {
     }
   }
 
-  // Public transit crowding data
   async getTransitData(lat, lon) {
     try {
-      // BMTC API (if available)
       const busData = await this.getBMTCCrowdData(lat, lon);
-      
-      // Namma Metro API (if available)
       const metroData = await this.getMetroCrowdData(lat, lon);
-      
+
       return {
         source: 'transit',
         estimate: (busData.crowdLevel + metroData.crowdLevel) * 100,
@@ -131,19 +114,17 @@ class RealCrowdDataService {
     }
   }
 
-  // Weather impact on crowd behavior
   async getWeatherImpact(lat, lon) {
     try {
       const weather = await fetch(
         `https://api.openweathermap.org/data/2.5/weather?` +
         `lat=${lat}&lon=${lon}&appid=${process.env.WEATHER_API_KEY}`
       );
-      
+
       const weatherData = await weather.json();
-      
-      // Weather affects crowd behavior
+
       const weatherMultiplier = this.calculateWeatherImpact(weatherData);
-      
+
       return {
         source: 'weather',
         multiplier: weatherMultiplier,
@@ -159,7 +140,6 @@ class RealCrowdDataService {
     }
   }
 
-  // Aggregate all crowd data sources
   aggregateCrowdData(crowdSources) {
     const validSources = crowdSources
       .filter(result => result.status === 'fulfilled')
@@ -170,18 +150,16 @@ class RealCrowdDataService {
       return { estimate: 0, confidence: 0, sources: [] };
     }
 
-    // Weighted average based on confidence
-    const totalWeight = validSources.reduce((sum, source) => 
+    const totalWeight = validSources.reduce((sum, source) =>
       sum + source.confidence, 0
     );
-    
-    const weightedEstimate = validSources.reduce((sum, source) => 
+
+    const weightedEstimate = validSources.reduce((sum, source) =>
       sum + (source.estimate * source.confidence), 0
     ) / totalWeight;
 
-    // Apply weather multiplier if available
     const weatherSource = validSources.find(s => s.source === 'weather');
-    const finalEstimate = weatherSource ? 
+    const finalEstimate = weatherSource ?
       weightedEstimate * weatherSource.multiplier : weightedEstimate;
 
     return {
@@ -192,28 +170,22 @@ class RealCrowdDataService {
     };
   }
 
-  // Helper methods
   calculateWeatherImpact(weatherData) {
-    const temp = weatherData.main.temp - 273.15; // Convert to Celsius
+    const temp = weatherData.main.temp - 273.15;
     const condition = weatherData.weather[0].main.toLowerCase();
-    
-    // Rain reduces outdoor crowds
+
     if (condition.includes('rain')) return 0.6;
-    
-    // Extreme heat reduces crowds
     if (temp > 35) return 0.7;
-    
-    // Pleasant weather increases crowds
     if (temp >= 20 && temp <= 30 && condition === 'clear') return 1.3;
-    
-    return 1.0; // Normal weather
+
+    return 1.0;
   }
 
   isEventActive(event) {
     const now = new Date();
     const eventStart = new Date(event.start_time);
     const eventEnd = new Date(event.end_time);
-    
+
     return now >= eventStart && now <= eventEnd;
   }
 }
