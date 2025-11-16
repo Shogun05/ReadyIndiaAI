@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Globe } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import {
   Select,
   SelectContent,
@@ -10,19 +11,24 @@ import {
 import { toast } from 'sonner';
 
 const LanguageSwitcher = () => {
-  const [currentLanguage, setCurrentLanguage] = useState('en');
+  const { i18n } = useTranslation();
+  const [currentLanguage, setCurrentLanguage] = useState(i18n.language);
   const [isChanging, setIsChanging] = useState(false);
 
   const languages = [
     { code: 'en', name: 'English', nativeName: 'English' },
     { code: 'hi', name: 'हिंदी (Hindi)', nativeName: 'हिंदी' },
-    // Future languages from Lingo.dev:
-    // { code: 'mr', name: 'मराठी (Marathi)', nativeName: 'मराठी' },
-    // { code: 'ta', name: 'தமிழ் (Tamil)', nativeName: 'தமிழ்' },
-    // { code: 'te', name: 'తెలుగు (Telugu)', nativeName: 'తెలుగు' },
-    // { code: 'kn', name: 'ಕನ್ನಡ (Kannada)', nativeName: 'ಕನ್ನಡ' },
-    // { code: 'bn', name: 'বাংলা (Bengali)', nativeName: 'বাংলা' },
-    // { code: 'gu', name: 'ગુજરાતી (Gujarati)', nativeName: 'ગુજરાતી' }
+    // Additional languages can be added via Lingo.dev
+    // { code: 'de', name: 'Deutsch (German)', nativeName: 'Deutsch' },
+    // { code: 'it', name: 'Italiano (Italian)', nativeName: 'Italiano' },
+    // { code: 'fr', name: 'Français (French)', nativeName: 'Français' },
+    // { code: 'es', name: 'Español (Spanish)', nativeName: 'Español' },
+    // { code: 'pt', name: 'Português (Portuguese)', nativeName: 'Português' },
+    // { code: 'ja', name: '日本語 (Japanese)', nativeName: '日本語' },
+    // { code: 'zh', name: '中文 (Chinese)', nativeName: '中文' },
+    // { code: 'ru', name: 'Русский (Russian)', nativeName: 'Русский' },
+    // { code: 'ar', name: 'العربية (Arabic)', nativeName: 'العربية' },
+    // { code: 'ko', name: '한국어 (Korean)', nativeName: '한국어' }
   ];
 
   // Initialize language from localStorage or browser locale
@@ -39,7 +45,10 @@ const LanguageSwitcher = () => {
     }
     
     setCurrentLanguage(initialLanguage);
-  }, []);
+    if (initialLanguage !== i18n.language) {
+      i18n.changeLanguage(initialLanguage);
+    }
+  }, [i18n]);
 
   const changeLanguage = async (languageCode) => {
     if (languageCode === currentLanguage) return;
@@ -52,9 +61,9 @@ const LanguageSwitcher = () => {
       // Update document language attribute
       document.documentElement.lang = languageCode;
       
-      // For Lingo.dev with static bundles in production,
-      // this would trigger a page reload or bundle switch
-      // For development, translations are handled at build time
+      // Change i18n language
+      await i18n.changeLanguage(languageCode);
+      
       setCurrentLanguage(languageCode);
       
       toast.success(`Language changed to ${languages.find(l => l.code === languageCode)?.nativeName}`);

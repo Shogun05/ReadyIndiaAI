@@ -80,3 +80,8 @@ button, a, .card {
   width: 100%;
   z-index: 1;
 }
+
+/* Hide Emergent badge */
+#emergent-badge {
+  display: none !important;
+}

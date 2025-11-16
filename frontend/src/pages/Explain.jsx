@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,13 +11,14 @@ import { toast } from 'sonner';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const Explain = () => {
+  const { t } = useTranslation();
   const [alertText, setAlertText] = useState('');
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const handleSimplify = async () => {
     if (!alertText.trim()) {
-      toast.error('Please enter alert text');
+      toast.error(t('pasteAlert'));
       return;
     }
 
@@ -26,10 +28,10 @@ const Explain = () => {
         text: alertText
       });
       setResult(response.data);
-      toast.success('Alert simplified successfully');
+      toast.success(t('alertSimplified'));
     } catch (error) {
       console.error('Error simplifying alert:', error);
-      toast.error('Failed to simplify alert');
+      toast.error(t('failedSimplify'));
     } finally {
       setLoading(false);
     }
@@ -51,19 +53,19 @@ const Explain = () => {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8 text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-2" style={{ fontFamily: 'Playfair Display, serif' }}>
-            Explain Alert
+            {t('explainAlertTitle')}
           </h1>
-          <p className="text-gray-600">Paste any disaster alert and get it simplified in multiple languages</p>
+          <p className="text-gray-600">{t('explainAlertDesc')}</p>
         </div>
 
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle>Enter Alert Text</CardTitle>
+            <CardTitle>{t('enterAlertText')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <Textarea
               data-testid="alert-input"
-              placeholder="Paste disaster alert text here... (e.g., 'Severe cyclonic storm over Arabian Sea, wind speed 120 kmph, expected landfall in 24 hours')"
+              placeholder={t('alertPlaceholder')}
               value={alertText}
               onChange={(e) => setAlertText(e.target.value)}
               rows={6}
@@ -78,12 +80,12 @@ const Explain = () => {
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Processing...
+                  {t('processing')}
                 </>
               ) : (
                 <>
                   <Sparkles className="w-4 h-4 mr-2" />
-                  Simplify
+                  {t('simplify')}
                 </>
               )}
             </Button>
@@ -93,7 +95,7 @@ const Explain = () => {
         {result && (
           <Card data-testid="result-card">
             <CardHeader>
-              <CardTitle>Simplified Alert</CardTitle>
+              <CardTitle>{t('simplifiedAlert')}</CardTitle>
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="en" className="w-full">

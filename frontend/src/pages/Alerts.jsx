@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import AlertCard from '../components/AlertCard';
 import MapComponent from '../components/MapComponent';
@@ -10,6 +11,7 @@ import { toast } from 'sonner';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const Alerts = () => {
+  const { t } = useTranslation();
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState('all');
@@ -48,7 +50,7 @@ const Alerts = () => {
       setAlerts(response.data);
     } catch (error) {
       console.error('Error fetching alerts:', error);
-      toast.error('Failed to fetch alerts');
+      toast.error(t('failedFetchAlerts'));
     } finally {
       setLoading(false);
     }
@@ -56,7 +58,7 @@ const Alerts = () => {
 
   const fetchNearbyAlerts = async () => {
     if (!userLocation) {
-      toast.error('Location access required');
+      toast.error(t('locationRequired'));
       return;
     }
 
@@ -66,10 +68,10 @@ const Alerts = () => {
         `${BACKEND_URL}/api/alerts/nearby?lat=${userLocation.lat}&lon=${userLocation.lon}&radius_km=500`
       );
       setAlerts(response.data);
-      toast.success(`Found ${response.data.length} nearby alerts`);
+      toast.success(`${t('foundNearbyAlerts')} ${response.data.length}`);
     } catch (error) {
       console.error('Error fetching nearby alerts:', error);
-      toast.error('Failed to fetch nearby alerts');
+      toast.error(t('failedFetchNearby'));
     } finally {
       setLoading(false);
     }
@@ -80,9 +82,9 @@ const Alerts = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2" style={{ fontFamily: 'Playfair Display, serif' }}>
-            View Alerts
+            {t('viewAlertsTitle')}
           </h1>
-          <p className="text-gray-600">Real-time disaster alerts from trusted sources</p>
+          <p className="text-gray-600">{t('realTimeDisasters')}</p>
         </div>
 
         {/* Map */}
@@ -97,7 +99,7 @@ const Alerts = () => {
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1">Disaster Type</label>
+                <label className="text-sm font-medium text-gray-700 block mb-1">{t('disasterType')}</label>
                 <Select value={filterType} onValueChange={setFilterType}>
                   <SelectTrigger data-testid="filter-type" className="w-48">
                     <SelectValue />

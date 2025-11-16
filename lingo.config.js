@@ -6,7 +6,7 @@ module.exports = {
   sourceLocale: "en",
 
   // Target languages - languages to automatically translate to
-  targetLocales: ["hi"],
+  targetLocales: ["hi", "de", "it", "fr", "es", "pt", "ja", "zh", "ru", "ar", "ko"],
 
   // AI Model configuration
   // Using Google's Gemini 2.0 Flash for high-quality translations
